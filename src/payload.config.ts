@@ -1,6 +1,7 @@
 import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
-
+import { adminAuthPlugin } from 'payload-auth-plugin'
+import { GoogleAuthProvider } from 'payload-auth-plugin/providers'
 import sharp from 'sharp' // sharp-import
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -21,6 +22,7 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
   admin: {
     components: {
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
@@ -29,6 +31,7 @@ export default buildConfig({
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeDashboard` statement on line 15.
       beforeDashboard: ['@/components/BeforeDashboard'],
+      afterLogin: ['/components/Auth#AuthComponent'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -78,6 +81,14 @@ export default buildConfig({
   globals: [Header, Footer],
   plugins: [
     ...plugins,
+    adminAuthPlugin({
+      providers: [
+        GoogleAuthProvider({
+          client_id: process.env.GOOGLE_CLIENT_ID as string,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+        }),
+      ],
+    }),
     vercelBlobStorage({
       collections: {
         media: true,
